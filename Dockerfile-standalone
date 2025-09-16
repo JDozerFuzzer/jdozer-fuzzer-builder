@@ -1,0 +1,72 @@
+
+FROM eclipse-temurin:21-jre-jammy
+
+LABEL maintainer="Tu Nombre <tu.email@ejemplo.com>"
+LABEL version="0.9"
+LABEL description="JDozerFuzzer - Plataforma de Fuzzing para APIs HTTP"
+
+# Metadatos para Open Containers Initiative
+LABEL org.opencontainers.image.title="JDozerFuzzer"
+LABEL org.opencontainers.image.description="Plataforma de Fuzzing Agresivo para APIs HTTP"
+LABEL org.opencontainers.image.url="https://github.com/tu-usuario/jdozerfuzzer"
+LABEL org.opencontainers.image.source="https://github.com/tu-usuario/jdozerfuzzer"
+LABEL org.opencontainers.image.licenses="AGPL-3.0"
+
+ENV LANGUAGE='en_US:en'
+ENV FUZZER_REDIS_HOST=localhost
+ENV FUZZER_REDIS_PORT=6379
+ENV FUZZER_BROKER_NAME=jdozer:fuzzer:broker
+ENV FUZZER_LOG_LEVEL=TRACE
+ENV FUZZER_SEEDER_PORT=8080
+ENV NODE_OPTIONS="--disable-warning=DEP0174"
+ENV FUZZER_BASE_PATH=/jdozer-fuzzer
+
+ENV FUZZER_VECTOR_PATH=${FUZZER_BASE_PATH}/jdozer-fuzzer-vectors
+ENV FUZZER_SEEDER_PATH=${FUZZER_BASE_PATH}/jdozer-fuzzer-seeder
+ENV FUZZER_ENGINE_PATH=${FUZZER_BASE_PATH}/jdozer-fuzzer-engine
+ENV FUZZER_PROCESSOR_PATH=${FUZZER_BASE_PATH}/jdozer-fuzzer-processor
+
+ENV FUZZER_LOG_DIR=/var/log${FUZZER_BASE_PATH}
+
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get install -y redis-server && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p ${FUZZER_LOG_DIR} /app/redis
+
+RUN mkdir -p ${FUZZER_VECTOR_PATH} ${FUZZER_SEEDER_PATH} ${FUZZER_ENGI1NE_PATH} ${FUZZER_PROCESSOR_PATH}
+
+COPY jdozer-fuzzer-config/start-jdozer-fuzzer.sh ${FUZZER_BASE_PATH}
+
+COPY --chown=185 jdozer-fuzzer-vectors/target/quarkus-app/lib ${FUZZER_VECTOR_PATH}/lib
+COPY --chown=185 jdozer-fuzzer-vectors/target/quarkus-app/*.jar ${FUZZER_VECTOR_PATH}/
+COPY --chown=185 jdozer-fuzzer-vectors/target/quarkus-app/app ${FUZZER_VECTOR_PATH}/app
+COPY --chown=185 jdozer-fuzzer-vectors/target/quarkus-app/quarkus ${FUZZER_VECTOR_PATH}/quarkus
+
+COPY --chown=185 jdozer-fuzzer-seeder ${FUZZER_SEEDER_PATH}
+COPY --chown=185 jdozer-fuzzer-engine ${FUZZER_ENGINE_PATH}
+COPY --chown=185 jdozer-fuzzer-processor ${FUZZER_PROCESSOR_PATH}
+
+COPY jdozer-fuzzer-config/redis.conf /etc/redis/redis.conf
+
+RUN set -e && \
+    cd ${FUZZER_SEEDER_PATH} && \
+    npm install && \
+    npm run build && \
+    cd ${FUZZER_ENGINE_PATH} && \
+    npm install && \
+    npm run build && \
+    cd ${FUZZER_PROCESSOR_PATH} && \
+    npm install && \
+    npm run build
+
+EXPOSE 8080
+EXPOSE 6379
+
+ENV FUZZER_START=${FUZZER_BASE_PATH}/start-jdozer-fuzzer.sh
+
+ENTRYPOINT ["sh", "jdozer-fuzzer/start-jdozer-fuzzer.sh"]
