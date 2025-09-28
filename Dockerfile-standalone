@@ -1,15 +1,15 @@
 
 FROM eclipse-temurin:21-jre-jammy
 
-LABEL maintainer="Tu Nombre <tu.email@ejemplo.com>"
+LABEL maintainer="JDozerFuzzer <jdozerfuzzer@gmail.com>"
 LABEL version="0.9"
-LABEL description="JDozerFuzzer - Plataforma de Fuzzing para APIs HTTP"
+LABEL description="JDozerFuzzer - Fuzzing Platform for HTTP APIs"
 
 # Metadatos para Open Containers Initiative
 LABEL org.opencontainers.image.title="JDozerFuzzer"
-LABEL org.opencontainers.image.description="Plataforma de Fuzzing Agresivo para APIs HTTP"
-LABEL org.opencontainers.image.url="https://github.com/tu-usuario/jdozerfuzzer"
-LABEL org.opencontainers.image.source="https://github.com/tu-usuario/jdozerfuzzer"
+LABEL org.opencontainers.image.description="Aggressive Fuzzing Platform for HTTP APIs"
+LABEL org.opencontainers.image.url="https://github.com/JDozerFuzzer/jdozer-fuzzer-builder"
+LABEL org.opencontainers.image.source="https://github.com/JDozerFuzzer/jdozer-fuzzer-builder"
 LABEL org.opencontainers.image.licenses="AGPL-3.0"
 
 ENV LANGUAGE='en_US:en'
@@ -40,7 +40,7 @@ RUN mkdir -p ${FUZZER_LOG_DIR} /app/redis
 
 RUN mkdir -p ${FUZZER_VECTOR_PATH} ${FUZZER_SEEDER_PATH} ${FUZZER_ENGI1NE_PATH} ${FUZZER_PROCESSOR_PATH}
 
-COPY jdozer-fuzzer-config/start-jdozer-fuzzer.sh ${FUZZER_BASE_PATH}
+COPY jdozer-fuzzer-builder/start-jdozer-fuzzer.sh ${FUZZER_BASE_PATH}
 
 COPY --chown=185 jdozer-fuzzer-vectors/target/quarkus-app/lib ${FUZZER_VECTOR_PATH}/lib
 COPY --chown=185 jdozer-fuzzer-vectors/target/quarkus-app/*.jar ${FUZZER_VECTOR_PATH}/
@@ -51,7 +51,7 @@ COPY --chown=185 jdozer-fuzzer-seeder ${FUZZER_SEEDER_PATH}
 COPY --chown=185 jdozer-fuzzer-engine ${FUZZER_ENGINE_PATH}
 COPY --chown=185 jdozer-fuzzer-processor ${FUZZER_PROCESSOR_PATH}
 
-COPY jdozer-fuzzer-config/redis.conf /etc/redis/redis.conf
+COPY jdozer-fuzzer-builder/redis.conf /etc/redis/redis.conf
 
 RUN set -e && \
     cd ${FUZZER_SEEDER_PATH} && \
