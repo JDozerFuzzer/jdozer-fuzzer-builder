@@ -9,7 +9,7 @@ sudo docker stop jdfuzzer-std || true
 
 sudo docker rm jdfuzzer-std || true
 
-sudo docker image rm ${jdozerfuzzer} || true
+# sudo docker image rm ${jdozerfuzzer} || true
 
 #################################################################################################
 
@@ -24,6 +24,6 @@ quarkus build
 cd $local_home
 
 sudo docker build -t ${jdozerfuzzer} -f Dockerfile-standalone ../
-sudo docker container create -p 8080:8080 -p 6379:6379 --name jdfuzzer-std ${jdozerfuzzer}
+sudo docker container create -p 8080:8080 -p 6379:6379 --name jdfuzzer-std-${jdfuzzer_version} ${jdozerfuzzer}
 sudo docker start jdfuzzer-std
 
