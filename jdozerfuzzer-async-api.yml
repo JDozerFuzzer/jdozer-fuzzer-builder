@@ -1,21 +1,20 @@
-asyncapi: 3.0.0
+asyncapi: 3.1.0
 info:
   title: JDozerFuzzer Events
   version: 1.0.0
-  description: |-
-    List of events produced by JDozerFuzzer
+  description: List of events produced by JDozerFuzzer
   license:
     name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0
+    url: "https://www.apache.org/licenses/LICENSE-2.0"
 defaultContentType: application/json
 servers:
   fuzzer-redis:
-    host: localhost:6379
+    host: "localhost:6379"
     protocol: redis
     description: Broker Server
   fuzzer-socket:
-    host: localhost:3000
-    protocol: WebSocket
+    host: "localhost:3000"
+    protocol: ws
     description: Server for the frontend
   socket-event-emitter:
     host: memory-runtime
@@ -23,105 +22,122 @@ servers:
     description: Internal events into fuzzer-socket
 channels:
   fuzzer-engine:
-    address: fuzzer:engine
+    address: "fuzzer:engine"
     messages:
-      cases-loaded:
-        $ref: '#/components/messages/cases-loaded'
+      total-cases:
+        $ref: "#/components/messages/total-cases"
       after-response:
-        $ref: '#/components/messages/after-response-v1.0'
+        $ref: "#/components/messages/after-response-v1.0"
       engine-started:
-        $ref: '#/components/messages/engine-started'
+        $ref: "#/components/messages/engine-started"
+      attack-completed:
+        $ref: "#/components/messages/attack-completed"
     description: Channel reserved for broadcasting events of the fuzzer-engine component.
     servers:
-      - $ref: '#/servers/fuzzer-redis'
+      - $ref: "#/servers/fuzzer-redis"
   fuzzer-seeder:
-    address: fuzzer:seeder
+    address: "fuzzer:seeder"
     messages:
       read-contract:
-        $ref: '#/components/messages/read-contract'
+        $ref: "#/components/messages/read-contract"
       errors:
-        $ref: '#/components/messages/error-event'
-      cases-created:
-        $ref: '#/components/messages/cases-created'
+        $ref: "#/components/messages/error-event"
+      total-cases:
+        $ref: "#/components/messages/total-cases"
       builder-successful:
-        $ref: '#/components/messages/builder-successful'
+        $ref: "#/components/messages/builder-successful"
     servers:
-      - $ref: '#/servers/fuzzer-redis'
+      - $ref: "#/servers/fuzzer-redis"
   fuzzer-processor:
-    address: fuzzer:processor
+    address: "fuzzer:processor"
     messages:
       status-code-runtime:
-        $ref: '#/components/messages/status-code'
+        $ref: "#/components/messages/status-code"
+      req-res-merged:
+        $ref: "#/components/messages/req-res-merged"
+      audit:
+        $ref: "#/components/messages/audit"
     servers:
-      - $ref: '#/servers/fuzzer-redis'
+      - $ref: "#/servers/fuzzer-redis"
+  fuzzer-vectors:
+    address: "fuzzer:vectors"
+    messages:
+      builder-success:
+        $ref: "#/components/messages/builder-vectors"
+      vector-created:
+        $ref: "#/components/messages/vector-created"
+      errors:
+        $ref: "#/components/messages/error-event"
+    servers:
+      - $ref: "#/servers/fuzzer-redis"
   fuzzer-running:
     address: fuzzer.running
     messages:
-      runtime-event:
-        $ref: '#/components/messages/runtime-emitter'
+      read-contract:
+        $ref: "#/components/messages/read-contract"
+      total-cases:
+        $ref: "#/components/messages/total-cases"
+      engine-started:
+        $ref: "#/components/messages/engine-started"
+      attack-completed:
+        $ref: "#/components/messages/attack-completed"
+      status-code:
+        $ref: "#/components/messages/status-code"
+      req-res-merged:
+        $ref: "#/components/messages/req-res-merged"
+      audit:
+        $ref: "#/components/messages/audit"
     servers:
-      - $ref: '#/servers/socket-event-emitter'
-  fuzzer-vectors:
-    address: fuzzer:vectors
-    messages:
-      builder-success:
-        $ref: '#/components/messages/builder-vectors'
-      vector-created:
-        $ref: '#/components/messages/vector-created'
-      errors:
-        $ref: '#/components/messages/error-event'
-    servers:
-      - $ref: '#/servers/fuzzer-redis'
+      - $ref: "#/servers/fuzzer-socket"
 operations:
   engine-running:
     action: send
     channel:
-      $ref: '#/channels/fuzzer-engine'
+      $ref: "#/channels/fuzzer-engine"
   process-running:
     action: send
     channel:
-      $ref: '#/channels/fuzzer-processor'
+      $ref: "#/channels/fuzzer-processor"
   internal-event-emitter:
     action: send
     channel:
-      $ref: '#/channels/fuzzer-running'
+      $ref: "#/channels/fuzzer-running"
   seeder-runtime:
     action: send
     channel:
-      $ref: '#/channels/fuzzer-seeder'
+      $ref: "#/channels/fuzzer-seeder"
   vectors-builder-success:
     action: send
     channel:
-      $ref: '#/channels/fuzzer-vectors'
+      $ref: "#/channels/fuzzer-vectors"
   vector-created:
     action: send
     channel:
-      $ref: '#/channels/fuzzer-vectors'
+      $ref: "#/channels/fuzzer-vectors"
   phases-builder:
     action: send
     channel:
-      $ref: '#/channels/fuzzer-engine'
+      $ref: "#/channels/fuzzer-engine"
   scenarios-builder:
     action: send
     channel:
-      $ref: '#/channels/fuzzer-engine'
+      $ref: "#/channels/fuzzer-engine"
   engine-started:
     action: send
     channel:
-      $ref: '#/channels/fuzzer-engine'
+      $ref: "#/channels/fuzzer-engine"
   total-cases:
     action: send
     channel:
-      $ref: '#/channels/fuzzer-engine'
+      $ref: "#/channels/fuzzer-engine"
 components:
   messages:
     cases-loaded:
-      description: |-
-        Event issued when test cases are configured per operation.
+      description: Event issued when test cases are configured per operation.
       title: cases-loaded
       headers:
         type: object
-        properties: 
+        properties:
           id:
             type: string
             format: uuid
@@ -144,22 +160,23 @@ components:
               - 1.0.0
       payload:
         type: object
-        properties: 
+        properties:
           fuzzerId:
             type: string
             format: uuid
           operationId:
             type: string
     after-response-v1.0:
-      description: |-
-        Message issued when a response is received from the remote API; this event is produced after post-processing the response.
+      description: >-
+        Message issued when a response is received from the remote API; this
+        event is produced after post-processing the response.
       title: Response Received
       headers:
         allOf:
-          - $ref: '#/components/schemas/headers'
+          - $ref: "#/components/schemas/headers"
           - type: object
             title: EventTypes
-            properties: 
+            properties:
               entityType:
                 type: string
                 enum:
@@ -171,7 +188,7 @@ components:
       payload:
         title: Response
         type: object
-        properties: 
+        properties:
           fuzzerId:
             type: string
             format: uuid
@@ -186,21 +203,22 @@ components:
           responseId:
             type: string
             examples:
-              -  JDF:803cf692-9416-4c31-9fac-3c5f1e51326a:ENG:addPet:02194154-b73b-4d0e-b332-2890d3639157:RES
+              - >-
+                JDF:803cf692-9416-4c31-9fac-3c5f1e51326a:ENG:addPet:02194154-b73b-4d0e-b332-2890d3639157:RES
             description: Unique identifier of the response
           scenarioName:
             type: string
             examples:
               - addPet
     status-code:
-      description: Status code in runntime
+      description: "Event that occurs at engine runtime, notifies remote API status codes."
       title: Status Code Runntime
       headers:
         allOf:
-          - $ref: '#/components/schemas/headers'
+          - $ref: "#/components/schemas/headers"
           - type: object
             title: EventTypes
-            properties: 
+            properties:
               entityType:
                 type: string
                 enum:
@@ -208,11 +226,14 @@ components:
               eventType:
                 type: string
                 enum:
-                  - status-code-runtime
+                  - status-code
       payload:
-        title: Status Code Runtime
+        title: Status Code
+        description: >-
+          It contains the case identifiers and the status code returned by the
+          remote API.
         type: object
-        properties: 
+        properties:
           fuzzerId:
             type: string
             format: uuid
@@ -232,134 +253,161 @@ components:
       title: Runtime Emitter
       description: Local events into module
       payload:
-        $ref: '#/components/schemas/socket-event-emitter'
+        $ref: "#/components/schemas/socket-event-emitter"
     read-contract:
       title: Read Contract
-      description: Message sent after reading the contract
+      description: >-
+        The OpenAPI contract has been successfully processed, the operations and
+        schemas have been extracted, and the fuzzer ID has been created.
       headers:
         allOf:
-          - $ref: '#/components/schemas/headers'
+          - $ref: "#/components/schemas/headers"
           - type: object
             title: EventTypes
-            properties: 
+            properties:
               entityType:
                 type: string
                 enum:
                   - fuzzer-seeder
-              enventType:
+              eventType:
                 type: string
-                enum: 
-                  - read-contract-runtime
+                enum:
+                  - read-contract
       payload:
-        title: Read Contract
+        title: Fuzzer Information
         type: object
-        properties: 
+        description: Data of the created fuzzer.
+        properties:
           fuzzerId:
             type: string
             format: uuid
           contract:
+            description: Contract information
             type: object
-            properties: 
+            properties:
               name:
                 type: string
+                description: Title of OpenApi contract
               version:
                 type: string
+                description: Contract version
               endpoint:
                 type: string
+                description: Api URL endpoint
               operations:
+                description: List of operations
                 type: array
                 minItems: 1
                 items:
                   type: string
-    cases-created:
+    total-cases:
       title: Cases Created
-      description: Event following the creation of test cases
+      description: Event that notifies the total number of test cases created.
       headers:
         allOf:
-          - $ref: '#/components/schemas/headers'
+          - $ref: "#/components/schemas/headers"
           - type: object
             title: EventTypes
-            properties: 
+            properties:
               entityType:
                 type: string
                 enum:
                   - fuzzer-seeder
-              enventType:
+              eventType:
                 type: string
-                enum: 
-                  - cases-created
+                enum:
+                  - total-cases
       payload:
-        title: Dummy cases total
+        title: List of operations and number of test cases
         type: object
-        properties: 
+        properties:
           fuzzerId:
             type: string
             format: uuid
           cases:
             type: object
+            description: Operation and number of cases per property.
             properties:
-              '[operationName]':
+              total:
+                type: number
+                description: Total number of cases
+              operations:
                 type: object
-                properties: 
-                  payloads:
-                    type: number
-                  headers:
-                    type: number
-                  querys:
-                    type: number
-                  paths:
-                    type: number
+                description: Number of cases per operation
+                properties:
+                  "[operationName]":
+                    type: object
+                    properties:
+                      payloads:
+                        description: Number of cases in the payload
+                        type: number
+                      headers:
+                        description: Number of cases in the hedaders
+                        type: number
+                      querys:
+                        description: Number of cases in the query
+                        type: number
+                      paths:
+                        description: Number of cases in the paths
+                        type: number
     builder-successful:
       title: Seeder Successful
       description: fuzzer-seeder completion message
       headers:
         allOf:
-          - $ref: '#/components/schemas/headers'
+          - $ref: "#/components/schemas/headers"
           - type: object
             title: EventTypes
-            properties: 
+            properties:
               entityType:
                 type: string
                 enum:
                   - fuzzer-seeder
-              enventType:
+              eventType:
                 type: string
-                enum: 
+                enum:
                   - builder-successful
       payload:
         title: Builder successful
         type: object
-        properties: 
+        properties:
           fuzzerId:
             type: string
             format: uuid
+          message:
+            type: string
+          details:
+            type: string
+          action:
+            type: string
     vector-created:
       title: Vector Created
       headers:
         allOf:
-          - $ref: '#/components/schemas/headers'
+          - $ref: "#/components/schemas/headers"
           - type: object
             title: EventTypes
-            properties: 
+            properties:
               entityType:
                 type: string
                 enum:
                   - fuzzer-vectors
-              enventType:
+              eventType:
                 type: string
-                enum: 
+                enum:
                   - vector-created
       payload:
         title: Vector Created
         type: object
-        properties: 
+        properties:
           fuzzerId:
             type: string
             format: uuid
           vectorId:
             type: string
             examples:
-              - JDF:1d813fb4-fdc3-47fe-894a-63124c5a9c5d:DMM:addPet:payload:00c04f6c-effd-4a65-972c-65ec74e8f0d3
+              - >-
+                JDF:1d813fb4-fdc3-47fe-894a-63124c5a9c5d:DMM:addPet:payload:00c04f6c-effd-4a65-972c-65ec74e8f0d3
           operationId:
             type: string
           context:
@@ -374,54 +422,57 @@ components:
       description: fuzzer-vectors completion message
       headers:
         allOf:
-          - $ref: '#/components/schemas/headers'
+          - $ref: "#/components/schemas/headers"
           - type: object
             title: EventTypes
-            properties: 
+            properties:
               entityType:
                 type: string
                 enum:
                   - fuzzer-vectors
-              enventType:
+              eventType:
                 type: string
-                enum: 
+                enum:
                   - builder-successful
       payload:
         title: Builder successful
         type: object
-        properties: 
+        properties:
           fuzzerId:
             type: string
             format: uuid
     engine-started:
       title: Engine Started
+      description: >-
+        The event that notifies the start of the test contains the loading
+        phases and the scenarios per operation.
       headers:
         allOf:
-          - $ref: '#/components/schemas/headers'
+          - $ref: "#/components/schemas/headers"
           - type: object
             title: EventTypes
-            properties: 
+            properties:
               entityType:
                 type: string
                 enum:
                   - fuzzer-engine
-              enventType:
+              eventType:
                 type: string
-                enum: 
+                enum:
                   - engine-started
       payload:
-        title: Engine Started
+        title: Configuration of phases and scenarios by operation
         type: object
-        properties: 
+        properties:
           fuzzerId:
             type: string
             format: uuid
           phases:
             type: object
-            properties: 
-              '[phase-name]':
+            properties:
+              "[phase-name]":
                 type: object
-                properties: 
+                properties:
                   duration:
                     type: number
                   arrivalRate:
@@ -432,10 +483,10 @@ components:
                     type: number
           scenarios:
             type: object
-            properties: 
-              '[scenario-name]':
+            properties:
+              "[scenario-name]":
                 type: object
-                properties: 
+                properties:
                   weight:
                     type: number
           totalCases:
@@ -445,10 +496,10 @@ components:
       description: Standard error event
       headers:
         allOf:
-          - $ref: '#/components/schemas/headers'
+          - $ref: "#/components/schemas/headers"
           - type: object
             title: EventTypes
-            properties: 
+            properties:
               entityType:
                 type: string
                 enum:
@@ -465,7 +516,7 @@ components:
       payload:
         title: Error
         type: object
-        properties: 
+        properties:
           fuzzerId:
             type: string
             format: uuid
@@ -475,12 +526,223 @@ components:
             type: string
           action:
             type: string
+    attack-completed:
+      title: Attack Completed
+      description: The engine has now finished performing the attack on the remote API.
+      headers:
+        allOf:
+          - $ref: "#/components/schemas/headers"
+          - type: object
+            title: EventTypes
+            properties:
+              entityType:
+                type: string
+                enum:
+                  - fuzzer-engine
+              eventType:
+                type: string
+                enum:
+                  - attack-completed
+      payload:
+        title: Attack Completed
+        type: object
+        properties:
+          fuzzerId:
+            type: string
+            format: uuid
+      tags:
+        - $ref: "#/components/tags/ending-test"
+    engine-stopped:
+      title: Engine Stopped
+      description: The engine has now finished performing the attack on the remote API.
+      headers:
+        allOf:
+          - $ref: "#/components/schemas/headers"
+          - type: object
+            title: EventTypes
+            properties:
+              entityType:
+                type: string
+                enum:
+                  - fuzzer-engine
+              eventType:
+                type: string
+                enum:
+                  - engine-stopped
+      payload:
+        title: Attack Completed
+        type: object
+        properties:
+          fuzzerId:
+            type: string
+            format: uuid
+      tags:
+        - $ref: "#/components/tags/ending-test"
+    fuzzing-finished:
+      title: Fuzzing Finished
+      description: The processor has now finished performing the attack on the remote API.
+      headers:
+        allOf:
+          - $ref: "#/components/schemas/headers"
+          - type: object
+            title: EventTypes
+            properties:
+              entityType:
+                type: string
+                enum:
+                  - fuzzer-processor
+              eventType:
+                type: string
+                enum:
+                  - fuzzing-finished
+      payload:
+        title: Fuzzing Completed
+        type: object
+        properties:
+          fuzzerId:
+            type: string
+            format: uuid
+      tags:
+        - $ref: "#/components/tags/ending-test"
+    req-res-merged:
+      title: Fuzzing Created
+      description: >-
+        This event, which occurs at engine runtime, notifies that the Request
+        and Response data in "fuzzingId" are available, and also reports whether
+        the case request data was valid (isValid) and the status code returned
+        by the remote API.
+      headers:
+        allOf:
+          - $ref: "#/components/schemas/headers"
+          - type: object
+            title: EventTypes
+            properties:
+              entityType:
+                type: string
+                enum:
+                  - fuzzer-processor
+              eventType:
+                type: string
+                enum:
+                  - req-res-merged
+      payload:
+        title: Error
+        type: object
+        properties:
+          fuzzerId:
+            type: string
+            format: uuid
+          caseId:
+            type: string
+            format: uuid
+          fuzzingId:
+            description: >-
+              Identifier of the record that contains the Request and Response
+              data.
+            type: string
+          operationId:
+            type: string
+          isValid:
+            type: boolean
+          statusCode:
+            type: number
+    false-positive:
+      title: False Positive
+      description: >-
+        The false positive event is sent when the remote API returns an
+        unexpected status code. This event is only emitted when mutations are
+        sent to the remote API.
+      headers:
+        allOf:
+          - $ref: "#/components/schemas/headers"
+          - type: object
+            title: EventTypes
+            properties:
+              entityType:
+                type: string
+                enum:
+                  - fuzzer-processor
+              eventType:
+                type: string
+                enum:
+                  - false-positive
+      payload:
+        type: object
+        title: False Positive
+        properties:
+          fuzzerId:
+            type: string
+            format: uuid
+          fuzzingId:
+            type: string
+          operationId:
+            type: string
+          riskLevel:
+            type: number
+            description: |-
+              Risk level according to the target API response.
+              - 0: Other
+              - 1: LOW
+              - 2: MEDIUM
+              - 3: HIGH
+          context:
+            type: string
+            enum:
+              - headers
+              - payload
+              - query
+              - path
+          details:
+            type: string
+            description: >-
+              Description of the data sent
+          statusCode:
+            type: number
+            description: |-
+              Status code returned by the remote API
+    audit:
+      title: Audit
+      description: >-
+        Notifies the creation of the audit log for a test case; contains the
+        audit identifier
+      headers:
+        allOf:
+          - $ref: "#/components/schemas/headers"
+          - type: object
+            title: EventTypes
+            properties:
+              entityType:
+                type: string
+                enum:
+                  - fuzzer-processor
+              eventType:
+                type: string
+                enum:
+                  - audit
+      payload:
+        title: Audit
+        description: >-
+          It contains the identifiers of the fuzzer, case, operation, and the
+          absolute identifier of the record with the audit data.
+        type: object
+        properties:
+          fuzzerId:
+            type: string
+            format: uuid
+          caseId:
+            type: string
+            format: uuid
+          operationId:
+            type: string
+          auditId:
+            description: Audit record identifier
+            type: string
   schemas:
     headers:
       title: Headers
       description: Event headers schema
       type: object
-      properties: 
+      properties:
         id:
           type: string
           format: uuid
@@ -500,4 +762,7 @@ components:
     socket-event-emitter:
       title: Socket Event Emitter
       type: object
-        
+  tags:
+    ending-test:
+      name: ending-test
+      description: Events related to the completion of an attack on the target API.
